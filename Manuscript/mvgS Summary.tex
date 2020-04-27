@@ -1,0 +1,453 @@
+
+	\documentclass{article}
+	\usepackage[utf8]{inputenc}
+
+	\usepackage{lineno,blindtext}
+	\usepackage[a4paper, total={7in, 9in}]{geometry}
+	\usepackage{amsmath}
+	\usepackage{dsfont}
+	\usepackage{mathrsfs}
+	\usepackage{amssymb}
+	\usepackage{enumerate}
+	\usepackage{multirow}
+	\usepackage{xcolor}
+	\usepackage{graphicx}
+
+	\usepackage{biblatex}
+	\addbibresource{reference.bib}
+	
+	\newcommand{\checkeditem}{\item[\refstepcounter{enumi}$\text{\rlap{$\checkmark$}}\square$]}
+	\newcommand{\todoitem}{\item[\refstepcounter{enumi}$\text{\rlap{$ $}}\square$]}
+	\def\undertilde#1{\mathord{\vtop{\ialign{##\crcr
+					$\hfil\displaystyle{#1}\hfil$\crcr\noalign{\kern1pt\nointerlineskip}
+					$\hfil\widetilde{}\hfil$\crcr\noalign{\kern1.5pt}}}}}
+	\newcommand{\indep}{\raisebox{0.05em}{\rotatebox[origin=c]{90}{$\models$}}}	
+			\newcommand{\expec}{\mathbb{E}}
+			\newcommand{\red}{\textcolor{red}}
+	\title{mvgS Summary}
+	\author{Irene Zhang}
+	\date{\today}
+	\linespread{2}
+	\linenumbers
+	\begin{document}
+	\maketitle
+
+	
+\section{Introduction}
+	Conceptually, complex traits are thought to result from genetic variation at multiple genes or their regulators, and how this genetic profile interacts with behavioral and environmental factors. In case-control or cohort studies, testing for gene-environment interactions is often performed  to identify genetic variants whose impact seems to be modified by different environmental exposures \cite{thomas2010gene}, although the power of such tests is often low \cite{cordell2009detecting}. Traditionally, the phenotipic effect of a gene-environment interaction is estimated by fitting a regression model for the outcome of interest($Y$) including both the main effects of a genetic variant($G$) and an environmental factor ($E$), as well as the product between $G$ and $E$. For a known environmental exposure, genome wide association studies (GWAS) for interaction effects usually scan through millions of single nucleotide polymorphisms (SNPs) using this model; this approach requires adjustment for multiple comparison \cite{he2017set}. Results from such single SNP analyses have  not proven to be reproducible. Statistical power is low for tests of interaction. Also, the environmental exposure is often measured with error or misclassified, which can reduce the power\cite{thomas2010gene, tchetgen2011robustness, cornelis2012gene, boonstra2016tests}. To alleviate penalties from multiple testing, filtering strategies have been adopted to reduce the number of candidate SNPs considered for interaction effects \cite{kooperberg2008increasing, thomas2010gene} by setting a threshold p-value for significance of the main effects and only considering significant subset of SNPs for interaction analysis.
+	 
+	  These approaches do not explicitly consider or use any  dependence among genetic variants and can lose power from not capturing those variants whose effects are only manifest through interaction.	In an attempt to improve power, it has become popular to aggregate or jointly modeling the effects of all SNPs in a pre-defined set,  such as a gene, pathway or specific genomic region. Some previously-proposed methods for testing GxE interaction effects are extension of  joint tests of multiple-SNP main effects, for example, by aggregating SNPs in the same gene and testing the interaction between the environment and the aggregated measures \cite{jiao2013sberia, wang2015powerful, basu2011comparison}.  These collapsing approach in general assumes that a large proportion of genetic variants is causal and that their effects have the same direction. The power of association analysis decreases if these assumptions do not hold. Another popular stream of analysis method is variance component tests, developed basing on kernel machines. Including the gene-environment set association test(GESAT)\cite{lin2013test}, and the interaction sequence kernel association test (iSKAT)\cite{lin2016test}, variance component tests have been proposed by extending the sequence kernel association test (SKAT)\cite{wu2011rare}. By assuming the individual interaction effects follows a zero-mean distribution, kernel based methods for interaction can test if the variance of the individual effects is different from 0, a one-degree-of-freedom test. The variance component tests overcome the difficulties of existing collapsing type of tests in testing the gene-environment interaction effects(\cite{lin2016test} ). We are going to review GESAT and iSKAT in secition 2.3 and compare out methods to these two direct tests. 
+
+
+	All these direct tests assume that the environmental factor is observed and measured without error. However, this is not always the case.. Robust interaction tests are needed to cope with inaccurately-measured exposure as well as the case where the environment factor is not observed at all. Pare et al. \cite{pare2010use} noticed that when a  SNP is involved in an interaction, with either another SNP or environmental exposure, quantitative trait variance can differ across the SNP genotypes. They therefore proposed a SNP prioritization method based on the variances, using Levene's test to assess the variance heterogeneity. SNPs with insignificant heterogeneity signals are filtered out of further interaction analysis so to reduce the number of tests performed. For a single SNP analyses, Levene's test can be directly applied to a categorical genotype, AA, AB, or BB. However, implementation of this concept when jointly testing multiple SNPs is not straightforward. Simply enumerating haplotype pairs would lead to an exponential increase in the number of categories, and Levene's test would have little power. 
+	
+	
+	Soave and Sun (2017) proposed a two-stage regression framework that generalized the classic Levene's test to allow for non-categorical genotypes,such as those found, for example, when missing genotypes are imputed. Their method is called the generalized Levene's Scale test (gS). The gS test first fits a main effect model and obtains the residuals, then tests if the variance of the residual vary between genotype groups; this latter is by modeling the absolute residuals versus the genotype.  To be precise, the gS using ordinary least squares in the first stage and an F statistic in the second stage is equivalent to classic Levene's test; and gS with least absolute deviance  in the first stage corresponds to the Brown-Forsythe test. Although there are some other popular variance tests, such as the likelihood ratio test(LRT) (\cite{cao2014versatile}), they have been shown to be less robust than the Levene's test. Therefore, here we generalize the gS test to multi-SNP version to create a region based test for variance-genotype dependence. As for the gS test, our multi-SNP generalized Levene's scale test (mvgS) does not require a measured environmental factor and hence is robust to missing or poorly measured environmental factors. Also,  mvgS can be used for imputed (non-categorical) genotype data.
+	
+	
+	
+	In section 2, we first review two direct interaction tests (GESAT and iSKAT) together with the underpinning sequence kernel association test (SKAT). Then we introduce the multi-SNP generalized Levene's scale test (mvgS) and together with the relevant model assumptions, choice of residuals, and the choice of second stage test statistics.  Simulations are performed  in section 3 to compare the performance of variants of mvgS containing different assumptions. First we estimate type 1 error of all versions of the mvgS tests under a range of error distributions, using a permutation-based empirical simulation design. Then we compare the power of all all versions tests in different settings 
+	and select the best combinations of residual type and second stage test statistic. At last, we compare the power of all tests,
+	where the environmental factor is binary or continuous, and with or without measurement error. 
+	
+	Results of this type 1 error simulation study are presented in section 4, and based on the result, we decide to use (xxx residual and xxx as second stage test) in mvgS. We then applied the mvgS test in UK10K data (need more details) and result is presented in section 5. Overall, our proposed multi-variable generalized Levene's scale test can be used as a filter of regions demonstrating possible interaction effects when the interacting factor is not observed; The test has been shown to be  robust to measurement error when compared to  existing direct interaction tests; and exhibits good power when using the xxx second stage approach.
+		
+
+
+\section{Methods}
+\subsection{Review of Direct Interaction Tests}
+ 
+In most studies of gene-environment interaction effect, the environmental factor $E$ is assumed to be accurately collected. The product of $E$ and a set of SNPs $G_1, G_2\cdots, G_J$ are scanned under a generalized linear model  with interaction effect:
+
+\begin{equation}
+g(\expec(Y_i))=\beta_0+\sum_{j=1}^J\beta_{1j}G_{ij} +\beta_2 E_i
++ \sum_{j=1}^J\beta_{3j} G_{ij}E_i
+\end{equation}
+
+and statistical tests are performed on the null hypothesis $\mathcal{H}_0: \beta_{3j}=0$ for all $j=1,\cdots,J$, searching for significant signals.  We call the methods that are applicable only when $E$ is available direct interaction tests. As addressed in the introduction, variance component tests, comparing with burden type test, have stable type 1 error control and better power when the directions of the interaction effects are different, and when their magnitudes are not comparable.  Here we are going to first review two variance component based direct tests GESAT and  iSKAT so to further compare with our proposed test. Both GESAT and  iSKAT are extensions of SKAT, originally developed by Wu et al.  \cite{wu2011rare} to test the main phenotypic effects of a region of SNPs. In testing the interaction effects, GESAT assumes that $\{\beta_{3j}\}$ are independent across SNPs $j=1,\cdots, J$, following an arbitrary distribution with mean 0 and variance $\tau^2$. The above null hypothesis is then equivalent to $\mathcal{H}_0: \tau^2=0$. Following the idea of SKAT, the test statistics for the variance component $\tau^2$ is:
+
+\begin{equation}
+Q_s =\mathbf{(Y-\widehat{\mu})^TSS^T(Y-\widehat{\mu})}
+\end{equation}
+
+\noindent where $S_i=(G_{i1}E_i, G_{i2}E_i, \cdots, G_{iJ}E_i)^T$ and matrix $\mathbf{S}=(S_1, \cdots, S_n)^T$  containing the gene-environment interaction terms. $\widehat{\mu}$  is estimated from a main effect model via ridge regression in case number of SNPs $J$ is large and candidate SNPs are of high linkage disequilibrium. 
+
+GESAT has advantages over collapsing type of test where the target region has many non-causal variants or when causal variants have different directions of association. However, if the target region has a high proportion of causal variants with the effects in the same direction, burden tests can be more powerful than GESAT. Those biological knowledge is often unknown prior to the test and an unified optimal test is in needed for the whole genome screening. iSKAT is then proposed as an combination of burden type test and variance component test. For a particular ratio of combination $\rho\in[0,1]$, iSKAT define the combined statistics:
+
+\begin{equation}
+Q_\rho = \mathbf{(Y-\widehat{\mu})^TSW\big( (}1-\rho)\mathbf{I + \rho\mathbf{11^T} \big)W^TS^T(Y-\widehat{\mu})}
+\end{equation}
+
+where $\mathbf{W}=diag(w_1,w_2,\cdots, w_j)$ is the diagnoal kernel matrix. Weights $w_i$ may depends on the minor allele frequencies.  As $\rho$ is unknown in practice, iSKAT search for the minimum p-value of $Q_\rho$ over the support of $\rho$ and developed the optimal statistics:
+
+\begin{equation}
+Q_{iSKAT}=\min_{0\leq\rho\leq 1} p_\rho
+\end{equation} 
+
+The unified test is equivalent to a generalized GESAT test that no longer assumes independent $\beta_{3j}$s. It assumes that $\beta_{3j}$ follows an arbitraty distribution with mean 0, variance $\tau$ and pairwise correlation $\rho$. Theoretically, iSKAT with flat weight, and $\rho=0$ is equivalent to GESAT.
+
+
+
+
+
+\subsection{Proposed Multi-variable Generalized Levene's Scale Test(mvgS)}
+
+% Instead of directly testing for GxE  interaction effect, we noticed that the phenotypic variance heterogeneity between genotype group can be caused by gene-environment or gene-gene interaction. Hence in a single SNP scenario, gS test can be used to identify possible GxE or GxG interaction effect. In the following derivation, we will use GxE interaction as example but method naturally generalizes to GxG interaction. Following the above notation, write $X_{ij}=\mathds{1}(G_i=j)$ for $j=0,1,2$. Suppose we have the true phenotype generating model (without assuming additive):
+%\begin{equation}
+%\begin{split}
+%Y_i= & \beta_0+\underbrace{\beta_{1} X_{i1}+\beta_{2}X_{i2}}_{\text{mean effect}}+\beta_3 E_i +\underbrace{\beta_4 X_{i1}\times E_i+\beta_5X_{i2} \times E_i}_{\text{interaction effect}}+\varepsilon_i,\varepsilon_i\sim \mathcal{N}(0,\sigma^2)
+%\end{split}
+%\end{equation}
+%The conditional mean $\mathbb{E}[Y_i|G_i]$ is still linear with the genotype $G_i$:
+%\begin{equation}
+%\begin{split}
+%\mathbb{E}[Y_i|G_i] & =\underbrace{\big(\beta_0+\beta_3\mathbb{E}(E_i)\big)}_{\gamma_0}+\underbrace{\big(\beta_1+\beta_4\mathbb{E}(E_i)\big)}_{\gamma_1}X_{i1}+\underbrace{\big(\beta_2+\beta_5\mathbb{E}(E_i)\big)}_{\gamma_2}X_{i2}\\
+%&  = \gamma_0+\gamma_1X_{i1}+\gamma_2X_{i2}
+%\end{split}
+%\end{equation}
+%The conditional variance $Var[Y_i|G_i]$ depends on the genotype $G_i$:
+%\begin{equation}
+%Var[Y_i|G_i]=\big(\beta_3+\beta_4X_{i1}+\beta_5X_{i2}\big)^2\cdot\sigma_E^2+\sigma^2
+%end{equation}
+%If the interaction effect does not exist, i.e. $\beta_4=\beta_5=0$, we have:
+%\begin{equation}
+%Var[Y_i|G_i]=\beta_3^2\cdot\sigma_E^2+\sigma^2\hspace{0.3cm}\indep G_i
+%\end{equation}
+%This formula gives us an opportunity to detect possible $G-E$ interaction without having any knowledge about $E$ by testing the between group variance:
+%\begin{equation}
+%\mathcal{H}_0: \beta_4=\beta_5  \Longleftrightarrow\mathcal{H}_0:Var(Y_i|G_i)=Var(Y_i)
+%\end{equation}
+
+%In the development of most G-E interaction test, E is assumed to be observed and measured accurately. However, it is not always the case. When the environmental factor is unknown, or measured with error, gS test is still applicable since assessing variance heterogeneity does not require the information of $E$. It can be an useful filter of potential interaction effects. Here we hope to generalize the gS test to a multi variable version, adapting to test a region of SNPs jointly.
+
+Assuming that the true data generating model involves $J$ SNPs with either main effect, interaction effect, or both:
+
+\begin{equation}
+\begin{split}
+Y_i =\beta_0+\sum_{j=1}^J\beta_{1j}X_{ij,1}+\sum_{j=1}^J\beta_{2j}X_{ij,2}+\beta_3 E_i
++\sum_{j=1}^J\beta_{4j}X_{ij,1}\times E_i
++\sum_{j=1}^J\beta_{5j}X_{ij,2}\times E_i+\varepsilon_i
+\end{split}
+\label{eq:truemv}
+\end{equation}
+where $X_{ij,k}=\mathds{1}(G_{ij}=k)$ for $k=0,1,2$. The method naturally generalize to additive effect model where $\beta_{1j}=\beta_{2j}$ and $\beta_{3j}=\beta_{4j}$ for all $j=1,\cdots, J$.  We assume that the error term $\varepsilon_i$ follows a normal distribution, and these errors are independent from the genotypes $\{ G_{ij}\}_{j=1}^J$.. Gene environment independence is also assumed. Hence the conditional expectation and variance for this model are:
+
+\begin{equation}
+\begin{split}\mathbb{E}\big[Y_i|\{G_{ij}\}\big] & =\beta_0+\beta_3\mathbb{E}(E_i)+\sum_{j=1}^J\gamma_{1j}X_{ij,1}+\sum_{j=1}^J\gamma_2 X_{ij,2}\\
+    Var\big[Y_i|\{G_{ij}\}\big] &=\bigg(\beta_3+\sum_{j=1}^J\beta_{4j}X_{ij,1}+\sum_{j=1}^J\beta_{5j}X_{ij,2}\bigg)^2\cdot \sigma_E^2+\sigma^2
+    \end{split}
+\end{equation}
+
+where $\gamma_{1j}=\beta_{1j}+\beta_{4j}\mathbb{E}(E_i)$, $\gamma_{2j}=\beta_{2j}+\beta_{5j}\mathbb{E}(E_i)$.
+
+As described in the introduction, the gS test has two stages, where the first stage calculated the residuals after removing the genotype main effects, and the second stage looks at the variance of these residuals. For implementation of the gS concept in a region of SNPs, we then propose to proceed as follows:
+
+First stage: Fit the main effect only regression model:
+
+\begin{equation}
+Y_i=b_0+\sum_{j=1}^J b_{1j}X_{ij,1}+\sum_{j=1}^J b_{2j}X_{ij,2}
+\end{equation}
+
+ with least absolute deviance(LAD), and obtain the residuals $e_i=Y_i-\widehat{Y}_i=Y_i-X_i^T\widehat{\beta}$. Under the alternative model (\ref{eq:truemv}), the residual follows $e_i\sim \mathcal{N}(0,\sigma_i^2)$ where $\sigma_i^2=Var[Y_i|\{G_{ij}\}]$.
+ 
+Absolute residual was used in the original gS test, for its robustness to non-normality. We follow this recommendation and write that, the distribution of $d_i=|e_i|$ is a folded normal with expectation associated with $G_{ij}$:
+ 
+    \begin{equation}
+        \mathbb{E}[d_i]\propto\sqrt{Var[e_i]}=\sqrt{\Big(\beta_3+\sum_{j=1}^J\beta_{4j}X_{ij,1}+\sum_{j=1}^J\beta_{5j}X_{ij,2}\Big)^2\cdot \sigma^2_E+\sigma^2}
+    \end{equation}
+    
+    If we are willing to assume $\sigma^2 \ll \Big(\beta_3+\sum_{j=1}^J\beta_{4j}X_{ij,1}+\sum_{j=1}^J\beta_{5j}X_{ij,2}\Big)^2\cdot \sigma^2_E$, an approximate linear relationship is obtained :
+    
+    \begin{equation}
+    \mathbb{E}[d_i]\propto \beta_3 \sigma_E+\sum_{j=1}^J\beta_{4j}\sigma_E X_{ij,1}+\sum_{j=1}^J\beta_{5j}\sigma_EX_{ij,2}
+    \end{equation}
+    
+However, when the assumption of small residual variance $\sigma^2$ is not realistic, we then consider the squared residual $d_i=e_i^2$ with:
+    
+    \begin{equation}
+    \begin{split}
+    \mathbb{E}(e_i^2) =Var(e_i)= & \Big(\beta_3+\sum_{j=1}^J\beta_{4j}X_{ij,1}+\sum_{j=1}^J\beta_{5j}X_{ij,2}\Big)^2\cdot \sigma^2_E+\sigma^2\\
+     \text{(simplified to be)}= & \gamma_0+\sum_{j=1}^J \gamma_{1j}X^2_{ij,1}+\sum_{j=1}^J\gamma_{2j}X^2_{ij,2} \\
+      & +\sum_{j< k}\theta^{1,1}_{jk}X_{ij,1}X_{ik,1} + \theta^{2,2}X_{ij,2}X_{ik,2}+\sum_{j\neq k} \theta^{1,2}_{j,k}X_{ij,1}X_{ik,2}
+    \end{split}
+    \end{equation}    
+    
+   where $\gamma_{1j}=\beta_{4j}^2$  and $\gamma_{2j}=\beta_{5j}^2$. And $\theta^{1,1}_{j,k}=\beta_{4j}\cdot\beta_{4k}, \theta^{2,2}_{j,k}=\beta_{5j}\cdot\beta_{5k}, \theta^{1,2}_{j,k}=\beta_{4j}\cdot\beta_{5k}$  for $j,k=1,\cdots, J$. If all genotypes are categorical, naturally $X_{ij,1}\cdot X_{ij,2}=\mathds{1}(G_{ij}=1)\cdot\mathds{1}(G_{ij}=2)=0$ and $X_{ij,1}^2=X_{ij,1}$, $X_{ij,2}^2=X_{ij,2}$. Hence we can safely drop the terms $\sum_{j,k}\theta^{1,2}_{j,k}X_{ij,1}X_{ik,2}$ and thereby reduce the expectation to:
+   
+    \begin{equation}
+    \mathbb{E}(e_i^2)\propto\gamma_0+\sum_j \gamma_{1j}X_{ij,1} +\sum_j \gamma_{2j} X_{ij,2} + \sum_{j<k}\theta^{1,1}_{j,k}X_{ij,1}X_{ik,1} + \sum_{j<l} \theta^{2,2}_{j,k}X_{ij,2}X_{ik,2}
+    \end{equation} 
+    
+Second stage: We now propose two versions of the mvgS test with different transformations of the residual: absolute and squared. Let $d_i$ be the transformed residuals, fit the regression model:
+
+ \begin{equation}
+    d_i=c_0+\sum_{j=1}^J c_{1j}X_{ij,1}+\sum_{j=1}^J c_{2j}X_{ij,2}
+ \end{equation}
+    
+ and jointly test $\mathcal{H}_0: c_{1j}=c_{2j}=0$, for all $j=1,\cdots,J$. For absolute residual, this is equivalent to testing that no interaction effect exists in any SNPs in the sequence: $\mathcal{H}_0:\beta_{4j}=\beta_{5j}=0\ \forall j\in[J]$. Again, for the squared residual, the null hypothesis is equivalent to $\mathcal{H}_0:\beta_{4j}^2=\beta_{5j}^2=0\ \forall j\in[J]$. 
+
+
+In the gS paper (Soave and Sun 2017), two options of first stage regression--least absolute deviance and least squares-- were explored theoretically and their equivalence to Levene's test was described. We follow their recommendation and work with LAD regression in the first stage. With the choice and when $J=1$, the mvgS test reduced to the original gS test. However, when $J>1$, additional considerations and choices are required for multivariate generalized scale test(mvgS):
+\begin{enumerate}[(1)]
+
+    \item Choice of residuals in the second stage: squared residual or absolute value. The approximate linearity of the absolute residuals  rests on the assumption of a very small or negligible error variance $\sigma^2$. In the simulation section, we will study how the assumption affect mvgS with absolute residual regarding its type 1 error and power. On the contrary, Levene's test with the squared residuals does not require a negligible $\sigma^2$, but this choice is sensitive to the violation of the normality of error distribution in equation (\ref{eq:truemv}).  Loh\cite{loh1987some} compared several modifications of Levene's test, among which, a second-order power transformation on the residuals  may lead to unstable type 1 error when $\varepsilon_i\sim t_{(df)}$, i.e. with heavier tail. The same type 1 error problem is expected when using squared residuals in our proposed method. Overall, a uniformly better choice in the transformations of residual is unknown.  we are going to conduct intensive simulation in section 3 to demonstrate the advantages and disadvantages associated with each choice.
+    
+    \item Choice of test statistics in the second stage: After completing stage 1 with a chosen form of residual transformation, we would like to choose a stage 2 test that can capture the increase in variability associated with the genotype at $J$ SNPs. No matter which type of residual the test uses in stage 2, it requires a statistical test for $2J$ coefficients jointly.  Candidate test statistics include ANOVA F-test, as adopted in the original gS test, sequence kernel association test (SKAT) and the optimal version of SKAT (SKAT-O). 
+    
+    \item Choice of genotype codings: the original gS test used a genotype coding, so that the data at a SNP could be represented by 3 values. For the proposed multi-SNP test, we propose to investigate both genotype coding for each SNP (i.e. a maximum of 2 degrees of freedom times J SNPs) or an additive coding for the count of minor alleles at each of J SNPs. The latter choice is much more parsimonious, and may therefore be more powerful if the additive assumption is correct.  If an additive coding is assumed, equations (7) and (12) can be simplified, and the stage 1 and stage 2 regressions become:
+
+    \begin{equation}
+    \begin{split}
+    \text{stage 1: } & Y_i= b_0+\sum_{j=1}^Jb_{1j}G_{ij}\\
+    \text{stage 2: } & d_i = c_0+\sum_{j=1}^J c_{1j} G_{ij}
+       \end{split}
+    \end{equation} 
+    Hence we consider both coding schemes for the genotype and examine the power differences in section 3.
+\end{enumerate}
+
+
+From the simulation results that compare all the combinations of transformations of residual in stage 1, the test statistics in stage 2, and genotype coding schemes, we finalize the proposed multivariate generalized Levene's scale test(mvgS) with default setting as following:
+In stage 1, fit $Y_i = b0+\sum_{j=1}^J b_{1j}G_{ij}$, and obtain the absolute residual $d_i=|e_i|=|Y_{i}-\widehat{Y}_{i}|$. Then in stage 2, fit
+$di=c0+\sum_{j=1}^J c_{1j}G_{ij}$ and test $\mathcal{H}_0: c_{1j}=0$ for $j=1,\cdots,J$ by xxx .
+
+
+\section{Simulation Study}
+
+\subsection{Data Generating Model}
+\textcolor{blue}{[UK10K data description of the genotypes here.]} We simulate an environmental factor independently from the genetic data,  $E_i\sim Bernoulli(0.3)$. Continuous environmental exposure with the same mean and variance is also considered in the various power simulation settings.
+
+Assumed an additive effect, the phenotpye is generated from:
+
+\begin{equation}
+    Y_i=\beta_0+\sum_{j=1}^J\beta_{1j}G_{ij}+\beta_{2}E_i+\sum_{j=1}^J\beta_{3j}G_{ij}\times E_i+\varepsilon_i, \varepsilon_i\sim \mathcal{N}(0,\sigma^2)
+    \label{eq:gendat}
+\end{equation}
+
+We use the same set of simulation coefficients in the iSKAT paper, where $\beta_0=3.6$, $\beta_2=0.015$ and $\sigma^2=0.27$, . Main effects $\beta_{1j}$ and interaction effects $\beta_{3j}$ of 11 SNPs are summarized in Table \ref{tab:t1e}.
+
+\begin{table}[htb!]
+\centering 
+\begin{tabular}{rrrrrrrrrrrrr}\hline
+$j=$&1 & 2 & 3 & 4&5&6&7&8& 9&10&11\\
+\hline
+$\beta_{ij}$  & -0.030 & -1.4& 8.3 & -4.1& 2.2& 0.005& -0.015& -0.0056& 0.0069& -0.033& 0.15 \\
+$\beta_{3j}$ & -0.218& 0& 0& -0.476& 0& 0& -0.151& -0.845& 0.0945& 0& -0.133  \\
+\hline
+\end{tabular}
+\caption{Main and interaction effects of 11 SNPs used in data generating model.}
+\label{tab:coef}
+\end{table}
+
+\subsection{Empirical Design of Type 1 Error Simulation}
+
+ Type 1 error is evaluated from a permutation based empirical simulation design. With the generated dataset $\{Y_i, E_i, G_{i1}, \cdots, G_{iJ}\}$, where $Y_i$ is dependent on $\{G_{ij}\times E_i\}$ set, we first randomly permute $(Y_i, E_i)$ pairs and obtain the new set $\{Y_i^{perm}, E_i^{perm}, G_{i1},\cdots, G_{iJ}\}$ where $Y_i^{perm} \indep G_{ij}\times E_i^{perm}$ for all $j=1,\cdots,J$.  Jointly permuting $(Y_i, E_i)$ pair can maintain the association between $Y_i$ and $E_i$, and the linkage pattern in $\{G_{ij}\}_{j=1}^J$, while breaks the association between $Y_i$ and $\{G_{ij}\times E_i\}_{j=1}^J$. In GWAS study of interaction effects, environment exposure $E$ is always fixed, as the phenotype of interest $Y$, while sets of SNPs are scanned for signal. Permuting $(Y,E)$ jointly can well approximate the GWAS setting and provide an empirical null distribution of the test statistics. In each permutation, we evaluate the mvgS with candidate combinations and direct methods GESAT and iSKAT. From $10^5$ permutations, the empirical null distribution and type 1 error of each test statistics are obtained with respect to the particular set of coefficients $\mathbf{\beta}$ and the data generating model (\ref{eq:gendat}). 
+ 
+ We added a few more simulation scenarios to study the robustness of each method to the minor allele frequency, and non-normal error distribution. Common variants are simulated from $G_{ij}\sim Bin(2, maf_j)$ with minor allele frequencies $maf_j$ randomly chosen between 0.05 to 0.4; and rare variants with $maf_j$ randomly chosen between 0.01 to 0.04. Error terms are simulated from $t_{5}$, $\chi^2_{3}$ and a folded $\mathcal{N}(0,1)$.
+
+\subsection{Power Evaluation}
+We continue with the same model (equation \ref{eq:gendat})) to generate a dataset $\{Y_i, E_i, G_{i1},\cdots, G_{iJ}\}$ under the alternative hypothesis. For one generated dataset, we perform the proposed method with each combinations of first stage residual transformations, second stage statistics and genotype codings and obtain the final statistics. The p-values are then calculated from the quantile of the test statistic with respect to its empirical null distribution. Then we repeat the whole process for 1000 times to obtain the empirical power. 
+
+%The simulation design can be summarized below:
+
+%\begin{enumerate}
+	%	\item	Generate dataset $\{Y_i, E_i, G_{i1}, \cdots, G_{iJ}\}$;
+%	\item Generate $E_i^{obs}$ from $E_i$ with or without measurement error;
+%	\begin{enumerate}[i]
+%		\item For each observed dataset $\{Y_i, E^{obs}_i, G_{i1}, \cdots, G_{iJ}\}$, permute $(Y_i, E_i^{obs})$ jointly;
+%		\item Evaluate all candidate mvgS tests and direct tests on each $\{Y_i^{perm}, E_i^{obs, perm}, G_{i1,}\cdots, G_{iJ}\}$, collect the test statistics;
+%		\item Repeat permutation $10^5$ times to obtain the empirical null distributions.
+%	\end{enumerate}
+%	\item Evaluate all 5 methods on $\{Y_i, E_i^{obs}, G_{i1}, \cdots, G_{iJ}\}$ , calculate p-value as the quantile of the statistics in its empirical null distribution.
+%	\item Repeat the whole process 1000 times to obtain the empirical power.
+%\end{enumerate}
+
+In addition to the situations described above, we also consider changing parts of the settings to include more possible cases in the simulation study so to identify the best combination of residual type and stage II statistic and genotype coding schemes within the proposed method. 
+
+\begin{enumerate}[(a)]
+
+	\item Power evaluation with $\beta_{3j}$ simulated identically and independently from a density function
+	 $$f(x)=0.3\mathds{1}(x=0)+0.7g(x)$$ where $g(x)$ is the normal density with mean $\mu$ and variance 1.  $\mu$ ranges from 0.1 to 1.
+	
+	\item  Power evaluation when $\varepsilon_i\sim \mathcal{N}(0,2*0.27^2)$, to assess how sensitive mvgS (with absolute residual) is to the assumption of negligible $\sigma^2$.
+	
+	\item Power evaluation when $\beta_2 = 0.05$, to assess how sensitive mvgS is to the magnitude of unobserved environment effect.
+\end{enumerate}
+
+Then to compare the proposed mvgS test with direct interaction test GESAT and iSKAT, we further consider two types of environment exposure variable: continuous and binary, matched with 5 different situations where we have no measurement error, and  measurement errors at a specified error rate, symmetric or skewed.
+
+
+\begin{enumerate}[(d)]
+	\item Power evaluation for continuous environment exposure	$E_i \sim \mathcal{N}(0.3,0.46)$
+	\begin{enumerate}[(i)]
+		\item no measurement error: $E^{obs}_i=E_i$
+		\item 10\% measurement error: $E^{obs}_i=E_i+\delta_i, \delta_i\sim\mathcal{N}()$
+		\item 20\% measurement error: $E^{obs}_i=E_i+\delta_i, \delta_i\sim\mathcal{N}()$
+		\item 10\% measurement error, skewed: $E^{obs}_i=E_i+\delta_i, \delta_i\sim\chi^2()$
+		\item 20\% measurement error, skewed: $E^{obs}_i=E_i+\delta_i, \delta_i\sim\chi^2()$
+	\end{enumerate}
+
+\end{enumerate}
+
+\begin{enumerate}[(e)]
+	\item Power evaluation for binary $E_i\sim Bin(0.3)$
+	\begin{enumerate}[(i)]
+		\item no measurement error: $E^{obs}_i=E_i$
+		\item 10\% measurement error: $E^{obs}_i=(1-\alpha_i)E_i +\alpha_i(1-E_i), \alpha_i\sim Ber(0.1)$
+		\item 20\% measurement error: $E^{obs}_i=(1-\alpha_i)E_i +\alpha_i(1-E_i), \alpha_i\sim Ber(0.2)$
+		\item 10\% measurement error, skewed: if  $E_i=0$,  $E_i^{obs}\sim Ber(1/3)$, else $E_i^{obs}=E_i$
+		\item 20\% measurement error, skewed: if  $E_i=0$,  $E_i^{obs}\sim Ber(2/3)$, else $E_i^{obs}=E_i$		
+	\end{enumerate}
+		
+\end{enumerate}
+
+
+
+
+
+
+
+\section{Results}
+
+Table \ref{tab:t1e} shows the empirical type 1 error evaluation of mvgS test with 6 different combinations from $10^5$ replicates. At a 5\% nominal level, any empirical T1E within (0.0494, 0506) are considered as correct type 1 error control. Under normal error model, absolute residual with F-test in second stage is the only combination within this range. Absolute residual with SKAT and squared residual with SKAT are considered acceptable since their T1E are slightly below the nominal level, which will give conservative conclusion when apply to real data. SKATO has significant T1E inflation with both residual types. Under t distributed error model,  absolute residual with all three candidate test statistics give lower T1E than under normal error model, while squared residual give higher T1E than under normal error model. 
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{lrrrrrrr}
+  \hline
+ & \multicolumn{3}{c}{absolute residual $d_i=|e_i|$ }&\ & \multicolumn{3}{c}{squared residual $d_i=e_i^2$}\\
+\cline{2-4}\cline{6-8}  		
+& F-test & SKAT & SKATO && F & SKAT & SKATO \\ 
+  \hline
+ normal distributed error  & 0.0505 & 0.0478 & 0.1155 && 0.0200 & 0.0469 & 0.0521 \\ 
+ t distributed error & 0.0300&  0.0476& 0.0908& & 0.0277& 0.0539 & 0.0588   \\
+
+   \hline
+\end{tabular}
+
+\caption{Empirical type 1 error simulation for 6 candidate combinations of mvgS test under normal error model and under setting (a) t distributed error.}
+\label{tab:t1e}
+\end{table}
+
+Within mvgS test, we evaluate the power of each combinations under the genotypic regression model and the additive model. Comparing the performance of two differently coded mvgS, there is around  49\% to 67\% power loss due to model mis-specification(Table \ref{tab:internalpower}). In the same table when we increase the variance of error term in data generating model (setting(b)), the power of mvgS decrease due to the variance explained by observed variables are lessened. Among mvgS, those with absolute residual are affected more than mvgS with squared residual.   In setting (d) where $\beta_2$ increase from 0.015 to 0.1, the power loss of mvgS with absolute residual varies from 13\% to 17\%, and from 5\% to 9\% for mvgS with squared residual. 
+
+
+\begin{table}[htb!]
+\centering
+\begin{tabular}{lrrrrrrr}
+  \hline
+   & \multicolumn{3}{c}{absolute residual $d_i=|e_i|$ }&\ & \multicolumn{3}{c}{squared residual $d_i=e_i^2$}\\
+   \cline{2-4}\cline{6-8}  		
+  & F-test & SKAT & SKATO && F & SKAT & SKATO \\ 
+  \hline
+Original  & 0.259 & 0.212 & 0.250 & &0.232 & 0.193 & 0.211 \\ 
+Additive coding & 0.673 & 0.413 & 0.499 && 0.695 & 0.445 & 0.442 \\ 
+(b)	$\sigma^2=2\times 0.27^2$  &  0.120& 0.161& 0.194&& 0.196& 0.160& 0.171   \\ 
+(b) Additive coding  & 0.661& 0.376& 0.464&& 0.694& 0.434& 0.444 \\
+(c) $\beta_2=0.1$ &0.214& 0.183& 0.211&& 0.212&0.184& 0.198  \\
+(c) Additive coding & 0.553&  0.285& 0.383&& 0.572& 0.331& 0.327  \\
+   \hline
+   
+\end{tabular}
+
+\caption{Within mvgS power evaluation of 6 combinations of different residual types and stage 2 statistics for original mvgS and for setting (b) additive coded mvgS, (c) larger variance of $\epsilon_i$, and (d) larger environment effect $\beta_2$.}
+\label{tab:internalpower}
+\end{table}
+
+
+ Overall, the power of mvgS with squared residual is higher than the original mvgS with absolute residual when the error variance gets larger. As addressed in many previous literature (\cite{loh1987some} and xxx ), using squared error instead of absolute error in Levene's test gives unstable type 1 error control under non-normal error distribution. We do not carry squared residuals in the following power comparison with direct tests, GESAT and iSKAT.
+ 
+
+ 
+
+\newpage
+
+\section{Discussion}
+
+\begin{itemize}
+	\item The mvgS with absolute residual and F test has correct type 1 error control, but the power is affected by the magnitude of error variance $\sigma^2$. The mvgS with squared residual has better power under normal error distribution, but its type 1 error is sensitive to non-normality. %Normalizing the phenotype $Y$ can help correct the empirical type 1 error, but the power is no longer better than mvgS with absolute residual.  
+	Despite of the power gain from using squared residual, the danger of unstable type 1 error  is sufficiently a concern.
+	
+	\item Another powerful method: adaptive combination of Bayes factors method(ADABF) has been proposed in 2018 (Lin et al., 2018) that allows prior information in the test.  Others propose mixed effect model instead of GLM in GxE interaction test.
+%	\item In real application, SNPs that are tested jointly are usually correlated. To obtain the residuals from the main effect in mvgS  stage 1, we can consider using ridge regression. However, when the set of variants are uncorrelated or weakly correlated, ridge regression can result in empirical power loss since the estimated residuals are biased towards larger values in magnitude. (In previous simulations power of gS+abs+F are around 0.6 with same coefficients)
+%	\begin{table}[ht]
+%\centering
+%\begin{tabular}{rllllll}
+%  \hline
+% & gS+abs+F & gS+sq+F & gS+abs+SKAT & gS+sq+SKAT & iSKAT & GESAT \\ 
+%  Ridge  & 0.509  & 0.049 & 0.253  & 0.061 & 0.437  & 0.671 \\ 
+%   \hline
+%\end{tabular}
+
+%\end{table}
+
+	\item A summary of permutation testing in regression can be found in \cite{anderson2001permutation}. The article summarises permutation testing in models with one and two main effects, and notes that in a model with two main effects and an interaction term there is no exact spermutation method for testing the interaction term. Consider the same data generating model equation
+	
+	\begin{equation}
+	Y_i=\beta_0+\beta_1G_i+\beta_2E_i+\beta_3G_iE_i+\varepsilon_i, \varepsilon_i\sim \mathcal{N}(0,\sigma^2)
+	\end{equation}
+	 a simple permutation based method would fix $G, E$ and permutes outcome $Y$ to give $Y^{perm}$, independent of $G$ and $E$. However, $Y$ is not independent of G and E in model \ref{singlesnp}. In our simulation design, jointly permutated phenotype $Y^{perm}$ is associated with $E^{perm}$ but still independent from $G$. Anderson claims that unless the main effect $\beta_{1}$ equals to zero or its exact value being known, joint permutation only approximate a restrictive empirical null distribution. Comparing our design to the real GWAS setting, where we keep the environmental factor $E$ and phenotype $Y$ as fixed, and search through all candidate SNPs for the one with interaction effect. Most of the SNPs have no interaction effect, that is, under the null hypothesis, but with possible main effect. Our proposed permutation cannot honestly keep the main effect of $G$, thus is not perfect under the case. (need to rephrase this part to show: although not perfect, permuting YE pair is the closest to a real GWAS study.
+	\item Contribution and limitation
+	
+\end{itemize}
+
+
+\printbibliography
+
+\newpage
+\section{Supplement Materials}
+\subsection{Proof for Independence in  the Permutation Type 1 Error Design}
+A short proof of the independence between $Y^{perm}_i$ and $G_i\times E_i^{perm}$ is stated below:
+
+\noindent \textit{proof:}\\
+Consider a single SNP case where the data generating model is 
+
+\begin{equation}
+Y_i = G_i+E_i+G_i\times E_i+\varepsilon_i
+\label{singlesnp}
+\end{equation}
+Imaging we permute all variables $(Y,E,G,\varepsilon)$ together, we can write the permuted phenotype as:
+
+$$Y_i^{perm} = G_i^{perm} + E_i^{perm} +G_i^{perm}E_i^{perm}+\varepsilon_i^{perm}$$ 
+Although $G_i$ is never permuted and $G_i^{perm}$ is not available in application, we use the representation of $Y^{perm}_i$ for the independence derivation. Naturally, the permuted $G_i^{perm}$ is independent of $G_i$, and $\varepsilon_i^{perm}$ is independent of $\varepsilon_i$. From the model assumption, we further have $G_i\indep E_i$, $G_i\indep E_i^{perm}$ and $G_i^{perm}\indep E_i^{perm}$. To evaluate the type 1 error of a particular test of interaction, we need to make sure we are under the null hypothesis that $Y_i^{perm}\indep G_i\times E_i^{perm}$.
+
+\begin{equation}
+\begin{split}
+&	Cov(Y_i^{perm}, G_i\times E_i^{perm} )  = Cov(G^{perm}_i+E_i^{perm} +G_i^{perm}E_i^{perm} + \varepsilon_i^{perm}, G_iE_i^{perm}) \\
+= &Cov(G_i^{perm}, G_iE^{perm}) + Cov(E_i^{perm}, G_iE_i^{perm}) + Cov(G_i^{perm}E^{perm}, G_iE^{perm}) \\
+= & \expec(E_i^{perm}G_iE_i^{perm})-\expec(E_i^{perm})\expec(G_i)\expec(E_i^{perm}) \\
+& \hspace{0.3cm} +\expec(G^{perm}_iE^{perm}GE^{perm})-\expec(G^{perm}_i)\expec(E_i^{perm})\expec(G_i)\expec(E^{perm})\\
+= &\big(1+\expec(G_i)\big)\cdot \expec(G_i)\cdot Var(E_i)\\
+= & 0\hspace{0.3cm} (\text{given that } G \text{ is centered and scaled})
+\end{split}
+\end{equation}
+
+
+\end{document}
+
+
+
+\begin{table}[htb!]
+	\centering
+	\begin{tabular}{llrrrrrrrrrr}
+		\hline
+		&	& \multicolumn{3}{c}{absolute residual $d_i=|e_i|$ }&& \multicolumn{3}{c}{squared residual $d_i=e_i^2$} && \multirow{2}{*}{iSKAT}&\multirow{2}{*}{GESAT}\\
+		\cline{3-5}\cline{7-9}   		
+		&		& F-test & SKAT & SKATO && F & SKAT & SKATO && &  \\ 
+		\hline
+		\multirow{5}{*}{Continuous $E$}	&	(i)   & \\ 
+		& (ii) &  \\ 
+		& (iii) & \\
+		& (iv) & \\
+		& (v) & \\\hline
+		\multirow{5}{*}{Binary $E$}	&	(i)   & \\ 
+		& (ii) &  \\ 
+		& (iii) & \\
+		& (iv) & \\
+		& (v) & \\	 	
+		\hline
+	\end{tabular}
+	\caption{Power evaluation of mvgS test, GESAT, and iSKAT with (e) continuous environment exposure, and (f) binary environment exposure. In each type of environment exposure we consider 5 different cases for measurement errors.}
+	\label{tab:externalpower}
+\end{table}
+
+
